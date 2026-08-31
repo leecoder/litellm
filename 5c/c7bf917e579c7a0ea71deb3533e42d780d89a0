@@ -1,0 +1,21 @@
+litellm/model_prices_and_context_window_backup.json
+  s_5716e67f650397::t_3282eb2c260094 47002-47524
+model_prices_and_context_window.json
+  s_5716e67f650397::t_eeecaf9c4433a3 47489-47524
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "5cc7bf917e579c7a0ea71deb3533e42d780d89a0",
+  "prompts": {},
+  "sessions": {
+    "s_5716e67f650397": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fc8d517caffexEdFOzJQkzjENJ",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}
