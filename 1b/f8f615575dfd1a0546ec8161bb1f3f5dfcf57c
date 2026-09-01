@@ -1,0 +1,29 @@
+scripts/monitor_databricks_pricing.py
+  s_00bcf90e039f8d::t_e1479f2cb15df0 134,136,139,148
+  s_5716e67f650397::t_417f66f049c4ff 102,153
+  s_5716e67f650397::t_cc54bae99a700c 135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "1bf8f615575dfd1a0546ec8161bb1f3f5dfcf57c",
+  "prompts": {},
+  "sessions": {
+    "s_00bcf90e039f8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_fc8d517caffexEdFOzJQkzjENJ",
+        "model": "unknown"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    },
+    "s_5716e67f650397": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fc8d517caffexEdFOzJQkzjENJ",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}
