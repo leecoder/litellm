@@ -1,0 +1,19 @@
+.github/workflows/monitor_databricks_pricing.yml
+  s_00bcf90e039f8d::t_d0c41d273ced64 16,22,27,29,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "d66a4ea1d8d265e2cfd70c4750a2cda3eee5e3e4",
+  "prompts": {},
+  "sessions": {
+    "s_00bcf90e039f8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_fc8d517caffexEdFOzJQkzjENJ",
+        "model": "unknown"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}
