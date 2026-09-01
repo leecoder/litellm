@@ -1,0 +1,30 @@
+.github/workflows/monitor_databricks_pricing.yml
+  s_00bcf90e039f8d::t_97cebb3eaf9986 48
+  s_5716e67f650397::t_3218ba1137f1e9 30
+scripts/monitor_databricks_pricing.py
+  s_5716e67f650397::t_1bfb76543290f0 1-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "3c0e08f7b2bdaa6c5b2c553296b6dacc95e3b8ab",
+  "prompts": {},
+  "sessions": {
+    "s_00bcf90e039f8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_fc8d517caffexEdFOzJQkzjENJ",
+        "model": "unknown"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    },
+    "s_5716e67f650397": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fc8d517caffexEdFOzJQkzjENJ",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}
