@@ -133,6 +133,50 @@ def test_get_key_models_passes_include_model_access_groups():
     assert "model2" in result
 
 
+def test_get_key_models_keeps_literal_model_colliding_with_group_name():
+    """A name that is BOTH a deployed model and an access group grants both at
+    runtime (_check_model_access_helper unions them), so the listing must keep
+    the literal model alongside the group members instead of dropping it."""
+    from litellm.proxy._types import UserAPIKeyAuth
+    from litellm.proxy.auth.model_checks import get_key_models
+
+    user_api_key_dict = UserAPIKeyAuth(models=["beta-models"], api_key="test-key")
+
+    result = get_key_models(
+        user_api_key_dict=user_api_key_dict,
+        proxy_model_list=["beta-models", "member-a", "unrelated"],
+        model_access_groups={"beta-models": ["member-a"]},
+        include_model_access_groups=False,
+    )
+    assert sorted(result) == ["beta-models", "member-a"]
+
+
+def test_get_team_models_keeps_literal_model_colliding_with_group_name():
+    """Team flavor of the collision case: literal deployment survives group expansion."""
+    from litellm.proxy.auth.model_checks import get_team_models
+
+    result = get_team_models(
+        team_models=["beta-models"],
+        proxy_model_list=["beta-models", "member-a", "unrelated"],
+        model_access_groups={"beta-models": ["member-a"]},
+        include_model_access_groups=False,
+    )
+    assert sorted(result) == ["beta-models", "member-a"]
+
+
+def test_get_team_models_drops_group_name_that_is_not_a_deployed_model():
+    """No collision: a pure access-group name is still replaced by its members."""
+    from litellm.proxy.auth.model_checks import get_team_models
+
+    result = get_team_models(
+        team_models=["beta-models"],
+        proxy_model_list=["member-a", "unrelated"],
+        model_access_groups={"beta-models": ["member-a"]},
+        include_model_access_groups=False,
+    )
+    assert result == ["member-a"]
+
+
 def test_get_key_models_does_not_mutate_input():
     """
     get_key_models must not mutate user_api_key_dict.models in-place.
@@ -656,7 +700,6 @@ def test_expand_wildcard_deployments_non_wildcard_passthrough():
 
 def test_expand_wildcard_deployments_openai_wildcard():
     """openai/* should expand into ≥1 known openai model entries."""
-    from unittest.mock import patch
 
     from litellm.proxy.auth.model_checks import (
         expand_wildcard_deployments_for_model_info,
@@ -709,6 +752,84 @@ def test_expand_wildcard_invalid_litellm_params_passthrough():
     # Even if LiteLLM_Params construction fails the deployment should survive
     result = expand_wildcard_deployments_for_model_info([deployment])
     assert result == [deployment]
+
+
+def test_get_complete_model_list_excludes_wildcard_routes_by_default():
+    """Regression (LIT-4108): a wildcard with a matching router deployment leaked into /v1/models."""
+    from litellm import Router
+    from litellm.proxy.auth.model_checks import get_complete_model_list
+
+    router = Router(
+        model_list=[
+            {
+                "model_name": "bedrock/*",
+                "litellm_params": {"model": "bedrock/*"},
+            },
+            {
+                "model_name": "gpt-4",
+                "litellm_params": {"model": "openai/gpt-4"},
+            },
+        ]
+    )
+
+    result = get_complete_model_list(
+        key_models=[],
+        team_models=[],
+        proxy_model_list=["bedrock/*", "gpt-4"],
+        user_model=None,
+        infer_model_from_keys=False,
+        return_wildcard_routes=False,
+        llm_router=router,
+    )
+
+    assert "bedrock/*" not in result
+    assert "gpt-4" in result
+    assert any(m.startswith("bedrock/") for m in result)
+
+
+def test_get_complete_model_list_excludes_wildcard_routes_without_router():
+    from litellm.proxy.auth.model_checks import get_complete_model_list
+
+    result = get_complete_model_list(
+        key_models=[],
+        team_models=[],
+        proxy_model_list=["bedrock/*", "gpt-4"],
+        user_model=None,
+        infer_model_from_keys=False,
+        return_wildcard_routes=False,
+        llm_router=None,
+    )
+
+    assert "bedrock/*" not in result
+    assert "gpt-4" in result
+    assert any(m.startswith("bedrock/") for m in result)
+
+
+def test_get_complete_model_list_includes_wildcard_routes_when_requested():
+    from litellm import Router
+    from litellm.proxy.auth.model_checks import get_complete_model_list
+
+    router = Router(
+        model_list=[
+            {
+                "model_name": "bedrock/*",
+                "litellm_params": {"model": "bedrock/*"},
+            },
+        ]
+    )
+
+    result = get_complete_model_list(
+        key_models=[],
+        team_models=[],
+        proxy_model_list=["bedrock/*"],
+        user_model=None,
+        infer_model_from_keys=False,
+        return_wildcard_routes=True,
+        llm_router=router,
+    )
+
+    assert result.count("bedrock/*") == 1
+    assert any(m.startswith("bedrock/") and m != "bedrock/*" for m in result)
 
 
 def test_add_known_models_refreshes_models_by_provider_for_wildcard_expansion():
