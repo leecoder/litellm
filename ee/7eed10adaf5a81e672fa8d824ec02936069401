@@ -1,0 +1,21 @@
+litellm/model_prices_and_context_window_backup.json
+  s_e8bd50bdc562f2::t_1c2f21eada505d 17343-17346,17355-17356,17363-17366,17375-17376,17513,17516,17528-17534,58582-58964
+model_prices_and_context_window.json
+  s_e8bd50bdc562f2::t_24f0372af0b821 17343-17346,17355-17356,17363-17366,17375-17376,17513,17516,17528-17534,58582-58964
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ee7eed10adaf5a81e672fa8d824ec02936069401",
+  "prompts": {},
+  "sessions": {
+    "s_e8bd50bdc562f2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f9504becbffeadnZCOF0fVyDBW",
+        "model": "databricks/databricks-glm-5-3-flash"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}
