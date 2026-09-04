@@ -1,0 +1,23 @@
+litellm/model_prices_and_context_window_backup.json
+  s_e8bd50bdc562f2::t_77d674c8192b2e 17343-17346,17355-17356,17363-17366,17375-17376,58699,58712,58803-58805,58908-58909,58937-58939,58954-58956
+model_prices_and_context_window.json
+  s_e8bd50bdc562f2::t_3c58d7960ade96 17343-17346,17355-17356,17363-17366,17375-17376,58699,58712,58803-58805,58908-58909,58937-58939,58954-58956
+tests/test_litellm/llms/databricks/test_databricks_cost_calculator.py
+  s_e8bd50bdc562f2::t_f6acd937dbab5d 68-79,223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6961442e4b1942efaa32697afa3e19986518fd40",
+  "prompts": {},
+  "sessions": {
+    "s_e8bd50bdc562f2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f9504becbffeadnZCOF0fVyDBW",
+        "model": "databricks/databricks-glm-5-3-flash"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}
