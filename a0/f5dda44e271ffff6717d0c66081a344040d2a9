@@ -1,0 +1,20 @@
+scripts/monitor_databricks_pricing.py
+  s_904464d14ca4d2::t_da4d51742982a9 119
+  s_904464d14ca4d2::t_86c84eedf2bfd6 121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "a0f5dda44e271ffff6717d0c66081a344040d2a9",
+  "prompts": {},
+  "sessions": {
+    "s_904464d14ca4d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_f9504becbffeadnZCOF0fVyDBW",
+        "model": "unknown"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}
