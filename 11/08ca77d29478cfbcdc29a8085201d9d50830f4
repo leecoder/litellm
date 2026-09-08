@@ -1,0 +1,19 @@
+.github/workflows/monitor_databricks_pricing.yml
+  s_e8bd50bdc562f2::t_33ab104b21b337 10-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "1108ca77d29478cfbcdc29a8085201d9d50830f4",
+  "prompts": {},
+  "sessions": {
+    "s_e8bd50bdc562f2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f9504becbffeadnZCOF0fVyDBW",
+        "model": "databricks/databricks-glm-5-3-flash"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}
