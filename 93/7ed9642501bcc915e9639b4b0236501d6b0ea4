@@ -1,0 +1,19 @@
+.github/workflows/monitor_databricks_pricing.yml
+  s_5716e67f650397::t_11eb921058cd5b 57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "937ed9642501bcc915e9639b4b0236501d6b0ea4",
+  "prompts": {},
+  "sessions": {
+    "s_5716e67f650397": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fc8d517caffexEdFOzJQkzjENJ",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}

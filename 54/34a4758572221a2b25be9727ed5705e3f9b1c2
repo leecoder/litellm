@@ -1,0 +1,26 @@
+scripts/monitor_databricks_pricing.py
+  s_904464d14ca4d2::t_c6ff260043958a 2,7-29,37,42,45-47,50-135,138-155,164,168-178,184-222,226-230,232-283,285-292,295,298-299,301-332,334-366,370,377,379-430,435-436,439-442,449-469
+  s_904464d14ca4d2::t_cfb5ef4b025f85 296
+  s_904464d14ca4d2::t_014094472ff31c 179-183
+  s_904464d14ca4d2::t_3a321c5865a8b9 293-294
+  s_904464d14ca4d2::t_fdc82a38ed35df 284,297
+  s_904464d14ca4d2::t_7dab484fb25850 223-225,231
+.github/workflows/monitor_databricks_pricing.yml
+  s_904464d14ca4d2::t_e95125953c9705 1,48,50-55,60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "5434a4758572221a2b25be9727ed5705e3f9b1c2",
+  "prompts": {},
+  "sessions": {
+    "s_904464d14ca4d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_f9504becbffeadnZCOF0fVyDBW",
+        "model": "unknown"
+      },
+      "human_author": "leecoder <leecoder@aol.com>"
+    }
+  }
+}
