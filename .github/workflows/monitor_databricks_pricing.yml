@@ -1,10 +1,9 @@
 name: Monitor Databricks Pricing
 
 # Daily monitor of the Databricks Foundation Model Serving pricing pages.
-# Before PR #38950 merges this workflow only lives on the leecoder/litellm
-# fork (manual dispatch); after the merge it runs on BerriAI/litellm's cron.
-# PRs are always created in the repository the workflow runs in, so the
-# built-in GITHUB_TOKEN is sufficient - no PAT or secret required.
+# Runs in whichever repository holds this workflow (fork or upstream); PRs
+# are created in the same repository, so the built-in GITHUB_TOKEN covers
+# everything - no PAT or secret required.
 on:
   schedule:
     - cron: "0 2 * * *" # daily 02:00 UTC
@@ -25,9 +24,6 @@ env:
 
 jobs:
   monitor-db-pricing:
-    # the merged cron fires on both repos; upstream owns the schedule so the
-    # two never race on the same base. manual triggers run on either repo.
-    if: github.event_name != 'schedule' || github.repository == 'BerriAI/litellm'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
