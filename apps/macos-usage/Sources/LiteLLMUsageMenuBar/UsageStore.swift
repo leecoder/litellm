@@ -9,9 +9,11 @@ final class UsageStore: ObservableObject {
     @Published private(set) var selectedKeyName: String?
     @Published private(set) var keyListMessage: String?
     @Published private(set) var isLoadingKeys = false
+    @Published private(set) var monthlyChartState: MonthlyUsageChartState = .loading
     @Published private(set) var autoRefreshInterval: AutoRefreshInterval
     private let keychain: KeychainStore
     private var client: GatewayClient
+    private let monthlyUsageLoader = MonthlyUsageLoader()
     private(set) var gatewayURL: URL
     private var credentials: (username: String, password: String)?
     private var session: AuthSession?
@@ -63,6 +65,7 @@ final class UsageStore: ObservableObject {
         session = nil
         availableKeys = []
         keyListMessage = nil
+        monthlyChartState = .loading
         lastSpendSample = nil
         smoothedSpendPerDay = nil
         configureRefreshTimer()
@@ -90,15 +93,16 @@ final class UsageStore: ObservableObject {
             scheduleNextRefresh()
         }
         do {
-            let budget: TeamBudget
+            let authenticatedBudget: (auth: AuthSession, budget: TeamBudget)
             do {
                 let auth = try await authenticatedSession()
-                budget = try await fetchCurrentBudget(apiKey: auth.apiKey)
+                authenticatedBudget = (auth, try await fetchCurrentBudget(apiKey: auth.apiKey))
             } catch GatewayError.unauthorized {
                 session = nil
                 let auth = try await authenticatedSession()
-                budget = try await fetchCurrentBudget(apiKey: auth.apiKey)
+                authenticatedBudget = (auth, try await fetchCurrentBudget(apiKey: auth.apiKey))
             }
+            let budget = authenticatedBudget.budget
             guard let limit = budget.maxBudget, limit > 0 else { throw GatewayError.noUserBudget }
             guard let duration = budget.budgetDuration, isMonthly(duration) else {
                 throw GatewayError.notMonthlyBudget(budget.budgetDuration ?? "없음")
@@ -113,10 +117,24 @@ final class UsageStore: ObservableObject {
                 resetAt: budget.budgetResetAt
             ))
             lastUpdated = now
+            let selectedKey = selectedKeyName.flatMap { selectedName in
+                availableKeys.first(where: { $0.keyName == selectedName })?.value
+            }
+            monthlyChartState = await monthlyUsageLoader.load(
+                client: client,
+                request: MonthlyUsageRequest(
+                    apiKey: authenticatedBudget.auth.apiKey,
+                    selectedKey: selectedKey,
+                    limit: limit,
+                    now: now
+                )
+            )
         } catch let error as GatewayError {
             state = .failure(error.localizedDescription)
+            monthlyChartState = .unavailable(error.localizedDescription)
         } catch {
             state = .failure("게이트웨이에 연결할 수 없습니다")
+            monthlyChartState = .unavailable(error.localizedDescription)
         }
     }
 
@@ -151,6 +169,7 @@ final class UsageStore: ObservableObject {
         selectedKeyName = keyName
         lastSpendSample = nil
         smoothedSpendPerDay = nil
+        monthlyChartState = .loading
         if let keyName {
             UserDefaults.standard.set(keyName, forKey: selectedKeyDefaultsKey)
         } else {
