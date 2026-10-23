@@ -25,10 +25,17 @@ private struct MenuBarLabel: View {
 
     var body: some View {
         switch store.state {
-        case let .ready(snapshot): Text("🚅 \(snapshot.percentage.formatted(.number.precision(.fractionLength(0))))%")
-        case .loading: Text("🚅 ...")
-        case .needsKey: Text("🚅 --")
-        case .unavailable, .failure: Text("🚅 !")
+        case let .ready(snapshot):
+            Text("🚅 \(snapshot.percentage.formatted(.number.precision(.fractionLength(0))))%")
+                .accessibilityLabel("LiteLLM 사용량 \(snapshot.percentage.formatted(.number.precision(.fractionLength(0))))퍼센트")
+        case .loading:
+            Text("🚅 ...").accessibilityLabel("LiteLLM 사용량 확인 중")
+        case .needsKey:
+            Text("🚅 --").accessibilityLabel("LiteLLM 사용량 로그인이 필요합니다")
+        case .unavailable:
+            Text("🚅 !").accessibilityLabel("LiteLLM 사용량을 표시할 수 없습니다")
+        case .failure:
+            Text("🚅 !").accessibilityLabel("LiteLLM 사용량 조회 오류")
         }
     }
 }

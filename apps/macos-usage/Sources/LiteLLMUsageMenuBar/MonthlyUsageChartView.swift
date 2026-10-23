@@ -82,7 +82,7 @@ struct MonthlyUsageChartView: View {
                     AxisGridLine()
                     AxisValueLabel {
                         if let amount = value.as(Double.self) {
-                            Text("$" + amount.formatted(.number.precision(.fractionLength(0))))
+                            Text(amount.formatted(.currency(code: "USD").precision(.fractionLength(0...2))))
                         }
                     }
                 }
@@ -109,6 +109,6 @@ struct MonthlyUsageChartView: View {
     }
 
     private func currency(_ value: Double) -> String {
-        value.formatted(.currency(code: "USD").precision(.fractionLength(0)))
+        value.formatted(.currency(code: "USD").precision(.fractionLength(0...2)))
     }
 }
