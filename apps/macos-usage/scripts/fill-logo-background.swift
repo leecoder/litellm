@@ -26,17 +26,15 @@ let scaledWidth = Int((Double(imageWidth) * scale).rounded())
 let scaledHeight = Int((Double(imageHeight) * scale).rounded())
 let origin = CGPoint(x: (canvasSize - scaledWidth) / 2, y: (canvasSize - scaledHeight) / 2)
 let colorSpace = CGColorSpaceCreateDeviceRGB()
-var pixels = [UInt8](repeating: 0, count: canvasSize * canvasSize * 4)
-
 guard let context = CGContext(
-    data: &pixels,
+    data: nil,
     width: canvasSize,
     height: canvasSize,
     bitsPerComponent: 8,
     bytesPerRow: canvasSize * 4,
     space: colorSpace,
     bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-) else {
+), let pixels = context.data?.assumingMemoryBound(to: UInt8.self) else {
     fputs("could not create image context\n", stderr)
     exit(1)
 }
