@@ -168,7 +168,7 @@ struct SettingsView: View {
         .frame(width: 380, height: 360)
         .padding()
         .onAppear {
-            gatewayURL = store.gatewayURL.absoluteString
+            gatewayURL = store.gatewayURLInput
             username = store.savedUsername
             password = store.savedPassword
         }

@@ -15,6 +15,8 @@ final class UsageStore: ObservableObject {
     private var client: GatewayClient
     private let monthlyUsageLoader = MonthlyUsageLoader()
     private(set) var gatewayURL: URL
+    private(set) var gatewayURLInput: String
+    private var gatewayConfigurationError: GatewayError?
     private var credentials: (username: String, password: String)?
     private var session: AuthSession?
     private var isRefreshing = false
@@ -30,21 +32,44 @@ final class UsageStore: ObservableObject {
     private let gatewayURLDefaultsKey = "gateway-url"
 
     init(keychain: KeychainStore = KeychainStore(), client: GatewayClient? = nil) {
-        let configuredURL = client?.baseURL ?? Self.loadGatewayURL()
+        let savedGatewayURL = UserDefaults.standard.string(forKey: gatewayURLDefaultsKey)
+        let configuredURL: URL
+        let configurationError: GatewayError?
+        if let client {
+            configuredURL = client.baseURL
+            configurationError = nil
+        } else if let savedGatewayURL, let parsedURL = GatewayClient.baseURL(from: savedGatewayURL) {
+            configuredURL = parsedURL
+            configurationError = nil
+        } else if savedGatewayURL != nil {
+            configuredURL = GatewayClient.defaultBaseURL
+            configurationError = .invalidGatewayURL
+        } else {
+            configuredURL = GatewayClient.defaultBaseURL
+            configurationError = nil
+        }
         self.keychain = keychain
         self.client = client ?? GatewayClient(baseURL: configuredURL)
         gatewayURL = configuredURL
+        gatewayURLInput = savedGatewayURL ?? configuredURL.absoluteString
+        gatewayConfigurationError = configurationError
         selectedKeyHash = UserDefaults.standard.string(forKey: selectedKeyDefaultsKey)
             ?? UserDefaults.standard.string(forKey: legacySelectedKeyDefaultsKey)
         let storedInterval = UserDefaults.standard.object(forKey: refreshIntervalDefaultsKey) as? Int
         autoRefreshInterval = AutoRefreshInterval(rawValue: storedInterval ?? AutoRefreshInterval.adaptive.rawValue) ?? .adaptive
-        state = .loading
+        if let configurationError {
+            state = .failure(configurationError.localizedDescription)
+        } else {
+            state = .loading
+        }
         configureRefreshTimer()
         let generation = refreshGeneration
         Task { [weak self] in
             guard let self else { return }
             await self.loadStoredCredentials(generation: generation)
-            guard self.refreshGeneration == generation, self.hasCredentials else { return }
+            guard self.refreshGeneration == generation,
+                  self.hasCredentials,
+                  self.gatewayConfigurationError == nil else { return }
             await self.loadKeys()
             await self.refresh()
         }
@@ -65,6 +90,8 @@ final class UsageStore: ObservableObject {
         refreshGeneration += 1
         UserDefaults.standard.set(newGatewayURL.absoluteString, forKey: gatewayURLDefaultsKey)
         gatewayURL = newGatewayURL
+        gatewayURLInput = newGatewayURL.absoluteString
+        gatewayConfigurationError = nil
         client = GatewayClient(baseURL: newGatewayURL)
         credentials = (trimmedUsername, password)
         session = nil
@@ -93,6 +120,11 @@ final class UsageStore: ObservableObject {
     }
 
     func refresh() async {
+        if let gatewayConfigurationError {
+            state = .failure(gatewayConfigurationError.localizedDescription)
+            monthlyChartState = .unavailable(gatewayConfigurationError.localizedDescription)
+            return
+        }
         guard let credentials else { return }
         guard !isRefreshing else {
             queueRefresh()
@@ -223,6 +255,7 @@ final class UsageStore: ObservableObject {
     }
 
     func loadKeys() async {
+        guard gatewayConfigurationError == nil else { return }
         guard hasCredentials, availableKeys.isEmpty else { return }
         guard !isLoadingKeys else {
             queuedKeyReload = true
@@ -379,7 +412,11 @@ final class UsageStore: ObservableObject {
             let stored = try await keychain.readCredentials()
             guard generation == refreshGeneration else { return }
             credentials = stored
-            state = stored == nil ? .needsKey : .loading
+            if let gatewayConfigurationError {
+                state = .failure(gatewayConfigurationError.localizedDescription)
+            } else {
+                state = stored == nil ? .needsKey : .loading
+            }
             configureRefreshTimer()
         } catch {
             guard generation == refreshGeneration else { return }
@@ -484,14 +521,6 @@ final class UsageStore: ObservableObject {
     private func isMonthly(_ duration: String) -> Bool {
         let normalized = duration.lowercased()
         return ["1mo", "1month", "30d", "monthly"].contains(normalized)
-    }
-
-    private static func loadGatewayURL() -> URL {
-        guard let savedURL = UserDefaults.standard.string(forKey: "gateway-url"),
-              let gatewayURL = GatewayClient.baseURL(from: savedURL) else {
-            return GatewayClient.defaultBaseURL
-        }
-        return gatewayURL
     }
 
 }
