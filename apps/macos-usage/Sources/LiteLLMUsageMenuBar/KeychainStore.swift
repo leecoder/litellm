@@ -5,9 +5,13 @@ struct KeychainStore: Sendable {
     private let service = "com.litellm.usage-menubar"
     private let credentialsAccount = "ui-credentials"
     private let itemNotFoundExitStatus: Int32 = 44
+    private let userCanceledExitStatus = Int32(UInt8(truncatingIfNeeded: errSecUserCanceled))
 
-    func readCredentials() throws -> (username: String, password: String)? {
-        guard let value = try read(account: credentialsAccount) else { return nil }
+    func readCredentials() async throws -> (username: String, password: String)? {
+        let value = try await Task.detached(priority: .userInitiated) {
+            try self.read(account: self.credentialsAccount)
+        }.value
+        guard let value else { return nil }
         return try JSONDecoder().decode(StoredCredentials.self, from: Data(value.utf8)).tuple
     }
 
@@ -28,6 +32,9 @@ struct KeychainStore: Sendable {
         let data = output.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
         if process.terminationStatus == itemNotFoundExitStatus { return nil }
+        if process.terminationStatus == userCanceledExitStatus {
+            throw KeychainError(errSecUserCanceled)
+        }
         guard process.terminationStatus == 0,
               let value = String(data: data, encoding: .utf8) else {
             throw KeychainError(errSecAuthFailed)
@@ -71,9 +78,9 @@ struct KeychainError: LocalizedError, Equatable {
     init(_ status: OSStatus) { self.status = status }
 
     var errorDescription: String? {
-        if status == errSecInteractionNotAllowed || status == errSecAuthFailed || status == errSecUserCanceled {
-            return "저장된 로그인 정보에 접근할 수 없습니다. 설정에서 다시 저장하세요"
-        }
+        if status == errSecUserCanceled { return "저장된 로그인 정보 접근이 취소되었습니다" }
+        if status == errSecInteractionNotAllowed { return "macOS에서 Keychain 접근을 허용해주세요" }
+        if status == errSecAuthFailed { return "저장된 로그인 정보에 접근할 수 없습니다. 설정에서 다시 저장하세요" }
         return "Keychain 처리에 실패했습니다 (\(status))"
     }
 }

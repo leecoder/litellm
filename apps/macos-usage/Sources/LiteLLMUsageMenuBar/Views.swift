@@ -34,12 +34,16 @@ struct UsagePopover: View {
     private var scopePicker: some View {
         VStack(alignment: .leading, spacing: 4) {
             Picker("조회 대상", selection: Binding(
-                get: { store.selectedKeyName ?? teamSelection },
-                set: { store.selectKey(named: $0 == teamSelection ? nil : $0) }
+                get: { store.selectedKeyHash ?? teamSelection },
+                set: { store.selectKey(withHash: $0 == teamSelection ? nil : $0) }
             )) {
                 Text("팀 전체").tag(teamSelection)
                 ForEach(store.availableKeys) { key in
-                    Text(key.displayName).tag(key.keyName)
+                    Text(key.displayName).tag(key.value)
+                }
+                if let selectedKeyHash = store.selectedKeyHash,
+                   !store.availableKeys.contains(where: { $0.value == selectedKeyHash }) {
+                    Text("저장된 키").tag(selectedKeyHash)
                 }
             }
             .pickerStyle(.menu)
