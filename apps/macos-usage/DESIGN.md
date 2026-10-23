@@ -43,10 +43,17 @@ Spacing derives from a 4pt base. The popover uses a 320pt width, 16pt outer padd
 - Source: the official square `assets/litellm_logo.jpg` mark with its sky-blue background extended across the canvas, generated into a standard macOS `.icns` bundle resource
 
 ### Usage popover
-- Structure: title, quota signal, usage facts, status line, action row
+- Structure: title, quota signal, usage facts, monthly cumulative usage chart, status line, action row
 - Variants: configured, needs key, loading, success, failure, unavailable quota
 - States: default, loading, error
 - Accessibility: buttons have labels and visible text; color is never the only status signal
+
+### Monthly usage chart
+- Structure: cumulative daily spend, projected month-end spend, monthly budget rule, and a text legend
+- Style: blue actual line with a light area, orange dashed forecast, red dashed budget limit
+- Plot height: 112pt within the existing 320pt-wide popover
+- Forecast: current month-to-date daily average projected through the last calendar day
+- Accessibility: actual, forecast, and limit are each named in visible text and the chart has an accessible label
 
 ### Settings form
  - Structure: auto-refresh picker, gateway URL field, username field, secure password field, explanatory label, save action
@@ -81,4 +88,4 @@ Use native macOS popover materials and tonal hierarchy. Do not add custom shadow
 
 ## 8. Accessibility Constraints & Accepted Debt
 
-Percentage text remains readable without color. The app does not expose a custom chart or notification surface in this version
+Percentage text remains readable without color. The chart uses visible labels as well as color to distinguish actual usage, forecast, and limit. The app does not expose a notification surface
