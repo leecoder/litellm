@@ -73,6 +73,7 @@ struct UsagePopover: View {
                     Text("다음 초기화 " + resetAt.formatted(date: .abbreviated, time: .shortened))
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                MonthlyUsageChartView(state: store.monthlyChartState)
             }
         case let .unavailable(message), let .failure(message):
             MessageView(title: "사용량을 표시할 수 없습니다", detail: message, symbol: "exclamationmark.triangle")
