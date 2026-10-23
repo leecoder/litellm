@@ -6184,6 +6184,7 @@ async def get_team_daily_activity_aggregated(
     api_key: str | None = None,
     exclude_team_ids: str | None = None,
     timezone: int | None = None,
+    include_current_utc_day: bool = False,
 ):
     """
     Aggregated daily activity for teams without pagination, including per-team breakdown.
@@ -6200,6 +6201,7 @@ async def get_team_daily_activity_aggregated(
         api_key (Optional[str]): Filter by API key.
         exclude_team_ids (Optional[str]): Comma-separated list of team IDs to exclude.
         timezone (Optional[int]): Timezone offset in minutes from UTC, matching JavaScript's Date.getTimezoneOffset() convention.
+        include_current_utc_day (bool): Extend a live range to today's UTC bucket when timezone is provided.
     Returns:
         SpendAnalyticsPaginatedResponse: Response containing all daily activity data for the range.
     """
@@ -6239,6 +6241,7 @@ async def get_team_daily_activity_aggregated(
         exclude_entity_ids=scope.exclude_team_ids,
         timezone_offset_minutes=timezone,
         include_entity_breakdown=True,
+        include_current_utc_day=include_current_utc_day,
     )
 
 

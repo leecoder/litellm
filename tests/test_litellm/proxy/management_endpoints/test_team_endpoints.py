@@ -12959,7 +12959,8 @@ async def test_new_team_batch_enqueued_token_limit_rejected_for_non_admin():
 
 
 @pytest.mark.asyncio
-async def test_get_team_daily_activity_aggregated_scopes_and_flags(mock_db_client):
+@pytest.mark.parametrize("include_current_utc_day", [False, True])
+async def test_get_team_daily_activity_aggregated_scopes_and_flags(mock_db_client, include_current_utc_day):
     """The aggregated endpoint must apply the same non-admin key scoping as the
     paginated one and request the per-team entity breakdown with the caller's
     timezone, so the Team Usage UI gets every day in one response."""
@@ -13021,6 +13022,7 @@ async def test_get_team_daily_activity_aggregated_scopes_and_flags(mock_db_clien
                 api_key=None,
                 exclude_team_ids=None,
                 timezone=480,
+                include_current_utc_day=include_current_utc_day,
                 user_api_key_dict=user_api_key_dict,
             )
 
@@ -13033,6 +13035,7 @@ async def test_get_team_daily_activity_aggregated_scopes_and_flags(mock_db_clien
             }
             assert call_kwargs["include_entity_breakdown"] is True
             assert call_kwargs["timezone_offset_minutes"] == 480
+            assert call_kwargs["include_current_utc_day"] is include_current_utc_day
             assert call_kwargs["table_name"] == "litellm_dailyteamspend"
 
 
