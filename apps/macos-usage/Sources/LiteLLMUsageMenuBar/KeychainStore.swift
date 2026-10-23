@@ -1,10 +1,10 @@
 import Foundation
 import Security
-import LocalAuthentication
 
 struct KeychainStore: Sendable {
     private let service = "com.litellm.usage-menubar"
     private let credentialsAccount = "ui-credentials"
+    private let itemNotFoundExitStatus: Int32 = 44
 
     func readCredentials() throws -> (username: String, password: String)? {
         guard let value = try read(account: credentialsAccount) else { return nil }
@@ -17,23 +17,22 @@ struct KeychainStore: Sendable {
     }
 
     private func read(account: String) throws -> String? {
-        let context = LAContext()
-        context.interactionNotAllowed = true
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecUseAuthenticationContext as String: context
-        ]
-        var result: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-        if status == errSecItemNotFound { return nil }
-        guard status == errSecSuccess, let data = result as? Data else {
-            throw KeychainError(status)
+        let process = Process()
+        let output = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = ["find-generic-password", "-s", service, "-a", account, "-w"]
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        if process.terminationStatus == itemNotFoundExitStatus { return nil }
+        guard process.terminationStatus == 0,
+              let value = String(data: data, encoding: .utf8) else {
+            throw KeychainError(errSecAuthFailed)
         }
-        return String(data: data, encoding: .utf8)
+        return value.trimmingCharacters(in: .newlines)
     }
 
     private func save(_ value: String, account: String) throws {
@@ -73,7 +72,7 @@ struct KeychainError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         if status == errSecInteractionNotAllowed || status == errSecAuthFailed || status == errSecUserCanceled {
-            return "저장된 로그인 정보에 접근할 수 없습니다. 설정에서 다시 저장하세요. Keychain 승인은 저장할 때만 요청합니다"
+            return "저장된 로그인 정보에 접근할 수 없습니다. 설정에서 다시 저장하세요"
         }
         return "Keychain 처리에 실패했습니다 (\(status))"
     }
