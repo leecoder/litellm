@@ -1,14 +1,11 @@
 # LiteLLM Usage Menu Bar Design System
 
-## 0. Research Log
-- Embedded refs: operational menu bar surface, using the taste-skill restraint rather than a marketing layout
-- Lazyweb: skipped, this is a native macOS utility with no web surface
-- Imagen drafts: skipped, a system utility has no image-led visual contract
+## 0. References
 - Apple platform reference: SwiftUI `MenuBarExtra` window style, available on macOS 13+
 
 ## 1. Atmosphere & Identity
 
-A quiet glanceable utility. The signature is a single signal, the current personal quota percentage, supported by a small amount of operational detail when the menu opens
+A quiet glanceable utility. The signature is a single signal, the quota percentage for the selected scope, supported by a small amount of operational detail when the menu opens
 
 ## 2. Color
 
