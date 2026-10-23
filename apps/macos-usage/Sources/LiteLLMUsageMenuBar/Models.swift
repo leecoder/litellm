@@ -42,6 +42,12 @@ struct TeamBudget: Decodable, Sendable {
 
 struct KeyListResponse: Decodable, Sendable {
     let keys: [String]
+    let totalPages: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case keys
+        case totalPages = "total_pages"
+    }
 }
 
 struct KeyInfoResponse: Decodable, Sendable {
@@ -77,12 +83,11 @@ struct GatewayKey: Identifiable, Equatable, Sendable {
     let keyName: String
     let alias: String?
 
-    var id: String { keyName }
+    var id: String { value }
     var displayName: String { alias ?? keyName }
 }
 
 struct AuthSession: Sendable {
-    let token: String
     let apiKey: String
     let expiresAt: Date
 
@@ -95,7 +100,6 @@ struct AuthSession: Sendable {
               let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let apiKey = payload["key"] as? String,
               let exp = payload["exp"] as? TimeInterval else { return nil }
-        self.token = token
         self.apiKey = apiKey
         self.expiresAt = Date(timeIntervalSince1970: exp)
     }
@@ -165,7 +169,7 @@ enum GatewayError: LocalizedError {
         case .invalidResponse: "게이트웨이 응답을 읽을 수 없습니다"
         case .unauthorized: "로그인 정보가 올바르지 않거나 세션이 만료되었습니다"
         case .forbidden: "개인 사용량 조회가 거부되었습니다 (HTTP 403)"
-        case .notFound: "사용자를 찾을 수 없습니다"
+        case .notFound: "요청한 리소스를 찾을 수 없습니다"
         case let .server(code): "게이트웨이 오류 (HTTP \(code))"
         case .noUserBudget: "개인 예산 한도가 설정되지 않았습니다"
         case let .notMonthlyBudget(duration): "개인 예산이 월 단위가 아닙니다 (\(duration))"

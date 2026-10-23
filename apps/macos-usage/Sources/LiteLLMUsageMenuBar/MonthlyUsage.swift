@@ -1,4 +1,3 @@
-import CryptoKit
 import Foundation
 
 struct DailyActivityQuery: Sendable {
@@ -60,7 +59,7 @@ struct MonthlyUsageChartData: Equatable, Sendable {
         var cumulativeSpend = 0.0
         let actualPoints = (1...currentDay).compactMap { day -> MonthlyUsagePoint? in
             guard let date = calendar.date(byAdding: .day, value: day - 1, to: monthStart) else { return nil }
-            cumulativeSpend += dailySpend[Self.dateString(date, calendar: calendar), default: 0]
+            cumulativeSpend += dailySpend[Self.isoDateString(date, calendar: calendar), default: 0]
             return MonthlyUsagePoint(date: date, cumulativeSpend: cumulativeSpend)
         }
         guard let currentPoint = actualPoints.last else { return nil }
@@ -85,7 +84,7 @@ struct MonthlyUsageChartData: Equatable, Sendable {
         max(limit, monthToDateSpend, estimatedMonthEndSpend) * 1.12
     }
 
-    private static func dateString(_ date: Date, calendar: Calendar) -> String {
+    static func isoDateString(_ date: Date, calendar: Calendar) -> String {
         let components = calendar.dateComponents([.year, .month, .day], from: date)
         guard let year = components.year, let month = components.month, let day = components.day else { return "" }
         return String(format: "%04d-%02d-%02d", year, month, day)
@@ -116,8 +115,8 @@ struct MonthlyUsageLoader {
         let query = DailyActivityQuery(
             apiKey: request.apiKey,
             selectedKey: request.selectedKey,
-            startDate: dateString(monthStart, calendar: calendar),
-            endDate: dateString(request.now, calendar: calendar),
+            startDate: MonthlyUsageChartData.isoDateString(monthStart, calendar: calendar),
+            endDate: MonthlyUsageChartData.isoDateString(request.now, calendar: calendar),
             timezone: timezone
         )
 
@@ -137,11 +136,6 @@ struct MonthlyUsageLoader {
         }
     }
 
-    private func dateString(_ date: Date, calendar: Calendar) -> String {
-        let components = calendar.dateComponents([.year, .month, .day], from: date)
-        guard let year = components.year, let month = components.month, let day = components.day else { return "" }
-        return String(format: "%04d-%02d-%02d", year, month, day)
-    }
 }
 
 extension GatewayClient {
@@ -163,14 +157,12 @@ extension GatewayClient {
             URLQueryItem(name: "timezone", value: String(query.timezone)),
         ]
         if let selectedKey = query.selectedKey {
-            let keyHash = SHA256.hash(data: Data(selectedKey.utf8)).map { String(format: "%02x", $0) }.joined()
-            queryItems.append(URLQueryItem(name: "api_key", value: keyHash))
-            queryItems.append(URLQueryItem(name: "include_current_utc_day", value: "true"))
-        } else if let teamID {
-            queryItems.append(URLQueryItem(name: "team_ids", value: teamID))
-        } else {
-            queryItems.append(URLQueryItem(name: "include_current_utc_day", value: "true"))
+            queryItems.append(URLQueryItem(name: "api_key", value: selectedKey))
         }
+        if let teamID {
+            queryItems.append(URLQueryItem(name: "team_ids", value: teamID))
+        }
+        queryItems.append(URLQueryItem(name: "include_current_utc_day", value: "true"))
         components.queryItems = queryItems
         guard let url = components.url else { throw GatewayError.invalidResponse }
         do {

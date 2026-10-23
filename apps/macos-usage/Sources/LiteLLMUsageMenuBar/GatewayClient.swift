@@ -9,7 +9,7 @@ struct GatewayClient: Sendable {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard var components = URLComponents(string: trimmed),
               let scheme = components.scheme?.lowercased(),
-              ["http", "https"].contains(scheme),
+              scheme == "https",
               let host = components.host,
               !host.isEmpty,
               components.user == nil,
@@ -83,7 +83,23 @@ struct GatewayClient: Sendable {
     }
 
     func fetchKeyList(apiKey: String) async throws -> [String] {
-        let url = baseURL.appending(path: "/key/list")
+        let firstPage = try await fetchKeyListPage(apiKey: apiKey, page: 1)
+        guard let totalPages = firstPage.totalPages, totalPages > 1 else { return firstPage.keys }
+
+        var keys = firstPage.keys
+        for page in 2...totalPages {
+            keys.append(contentsOf: try await fetchKeyListPage(apiKey: apiKey, page: page).keys)
+        }
+        return keys
+    }
+
+    private func fetchKeyListPage(apiKey: String, page: Int) async throws -> KeyListResponse {
+        var components = URLComponents(url: baseURL.appending(path: "/key/list"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "size", value: "100"),
+        ]
+        guard let url = components?.url else { throw GatewayError.invalidResponse }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -98,7 +114,7 @@ struct GatewayClient: Sendable {
         case 404: throw GatewayError.notFound
         default: throw GatewayError.server(httpResponse.statusCode)
         }
-        return try decoder.decode(KeyListResponse.self, from: data).keys
+        return try decoder.decode(KeyListResponse.self, from: data)
     }
 
     func fetchKeyInfo(apiKey: String, key: String) async throws -> KeyBudget {
