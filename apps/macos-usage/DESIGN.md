@@ -40,7 +40,7 @@ Spacing derives from a 4pt base. The popover uses a 320pt width, 16pt outer padd
 - Source: the official square `assets/litellm_logo.jpg` mark with its sky-blue background extended across the canvas, generated into a standard macOS `.icns` bundle resource
 
 ### Usage popover
-- Structure: title, quota signal, usage facts, monthly cumulative usage chart, status line, action row
+- Structure: title, usage scope picker, quota signal, usage facts, monthly cumulative usage chart, status line, action row
 - Variants: configured, needs key, loading, success, failure, unavailable quota
 - States: default, loading, error
 - Accessibility: buttons have labels and visible text; color is never the only status signal
