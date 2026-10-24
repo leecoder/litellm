@@ -17,6 +17,7 @@ final class UsageStore: ObservableObject {
     private(set) var gatewayURL: URL
     private(set) var gatewayURLInput: String
     private var gatewayConfigurationError: GatewayError?
+    private var credentialLoadTask: Task<Void, Never>?
     private var credentials: (username: String, password: String)?
     private var session: AuthSession?
     private var isRefreshing = false
@@ -64,9 +65,12 @@ final class UsageStore: ObservableObject {
         }
         configureRefreshTimer()
         let generation = refreshGeneration
+        credentialLoadTask = Task { [weak self] in
+            await self?.loadStoredCredentials(generation: generation)
+        }
         Task { [weak self] in
             guard let self else { return }
-            await self.loadStoredCredentials(generation: generation)
+            await self.credentialLoadTask?.value
             guard self.refreshGeneration == generation,
                   self.hasCredentials,
                   self.gatewayConfigurationError == nil else { return }
@@ -76,6 +80,10 @@ final class UsageStore: ObservableObject {
     }
 
     var hasCredentials: Bool { credentials != nil }
+
+    func waitForCredentialLoad() async {
+        await credentialLoadTask?.value
+    }
 
     var savedUsername: String { credentials?.username ?? "" }
     var savedPassword: String { credentials?.password ?? "" }
@@ -291,7 +299,20 @@ final class UsageStore: ObservableObject {
                 )
             }
             guard generation == refreshGeneration else { return }
-            let keys = try await fetchKeyOptions(apiKey: auth.apiKey, client: currentClient)
+            var keys: [GatewayKey]
+            do {
+                keys = try await fetchKeyOptions(apiKey: auth.apiKey, client: currentClient)
+            } catch GatewayError.unauthorized {
+                guard generation == refreshGeneration else { return }
+                session = nil
+                let refreshedAuth = try await authenticatedSession(
+                    client: currentClient,
+                    credentials: credentials,
+                    generation: generation
+                )
+                guard generation == refreshGeneration else { return }
+                keys = try await fetchKeyOptions(apiKey: refreshedAuth.apiKey, client: currentClient)
+            }
             guard generation == refreshGeneration else { return }
             availableKeys = keys
             if let selectedKeyHash {
@@ -506,9 +527,28 @@ final class UsageStore: ObservableObject {
     private func fetchKeyOptions(apiKey: String, client: GatewayClient) async throws -> [GatewayKey] {
         let keys = try await client.fetchKeyList(apiKey: apiKey)
         var options: [GatewayKey] = []
-        for key in keys {
-            let info = try await client.fetchKeyInfo(apiKey: apiKey, key: key)
-            options.append(GatewayKey(value: key, keyName: info.keyName, alias: info.keyAlias))
+        let batchSize = 10
+        for batchStart in stride(from: 0, to: keys.count, by: batchSize) {
+            let batchEnd = min(batchStart + batchSize, keys.count)
+            let batch = (batchStart..<batchEnd).map { (index: $0, key: keys[$0]) }
+            let batchOptions = try await withThrowingTaskGroup(
+                of: (Int, GatewayKey).self,
+                returning: [(Int, GatewayKey)].self
+            ) { group in
+                for (index, key) in batch {
+                    group.addTask {
+                        let info = try await client.fetchKeyInfo(apiKey: apiKey, key: key)
+                        return (index, GatewayKey(value: key, keyName: info.keyName ?? "이름 없는 키", alias: info.keyAlias))
+                    }
+                }
+
+                var results: [(Int, GatewayKey)] = []
+                for try await result in group {
+                    results.append(result)
+                }
+                return results.sorted { $0.0 < $1.0 }
+            }
+            options.append(contentsOf: batchOptions.map(\.1))
         }
         return options
     }

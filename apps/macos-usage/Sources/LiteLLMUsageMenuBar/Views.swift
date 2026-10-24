@@ -167,7 +167,8 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 380, height: 360)
         .padding()
-        .onAppear {
+        .task {
+            await store.waitForCredentialLoad()
             gatewayURL = store.gatewayURLInput
             username = store.savedUsername
             password = store.savedPassword

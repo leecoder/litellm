@@ -4,46 +4,37 @@ import Security
 struct KeychainStore: Sendable {
     private let service = "com.litellm.usage-menubar"
     private let credentialsAccount = "ui-credentials"
-    private let itemNotFoundExitStatus: Int32 = 44
-    private let userCanceledExitStatus = Int32(UInt8(truncatingIfNeeded: errSecUserCanceled))
 
     func readCredentials() async throws -> (username: String, password: String)? {
-        let value = try await Task.detached(priority: .userInitiated) {
+        let data = try await Task.detached(priority: .userInitiated) {
             try self.read(account: self.credentialsAccount)
         }.value
-        guard let value else { return nil }
-        return try JSONDecoder().decode(StoredCredentials.self, from: Data(value.utf8)).tuple
+        guard let data else { return nil }
+        return try JSONDecoder().decode(StoredCredentials.self, from: data).tuple
     }
 
     func saveCredentials(username: String, password: String) throws {
-        let value = try JSONEncoder().encode(StoredCredentials(username: username, password: password))
-        try save(String(data: value, encoding: .utf8) ?? "", account: credentialsAccount)
+        let data = try JSONEncoder().encode(StoredCredentials(username: username, password: password))
+        try save(data, account: credentialsAccount)
     }
 
-    private func read(account: String) throws -> String? {
-        let process = Process()
-        let output = Pipe()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        process.arguments = ["find-generic-password", "-s", service, "-a", account, "-w"]
-        process.standardInput = FileHandle.nullDevice
-        process.standardOutput = output
-        process.standardError = FileHandle.nullDevice
-        try process.run()
-        let data = output.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        if process.terminationStatus == itemNotFoundExitStatus { return nil }
-        if process.terminationStatus == userCanceledExitStatus {
-            throw KeychainError(errSecUserCanceled)
-        }
-        guard process.terminationStatus == 0,
-              let value = String(data: data, encoding: .utf8) else {
-            throw KeychainError(errSecAuthFailed)
-        }
-        return value.trimmingCharacters(in: .newlines)
+    private func read(account: String) throws -> Data? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else { throw KeychainError(status) }
+        guard let data = result as? Data else { throw KeychainError(errSecDecode) }
+        return data
     }
 
-    private func save(_ value: String, account: String) throws {
-        let data = Data(value.utf8)
+    private func save(_ data: Data, account: String) throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

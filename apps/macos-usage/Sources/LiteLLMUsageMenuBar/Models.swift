@@ -60,7 +60,7 @@ struct KeyInfoResponse: Decodable, Sendable {
 
 struct KeyBudget: Decodable, Sendable {
     let keyAlias: String?
-    let keyName: String
+    let keyName: String?
     let spend: Double
     let maxBudget: Double?
     let budgetDuration: String?
