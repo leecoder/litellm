@@ -56,10 +56,19 @@ struct MonthlyUsageChartData: Equatable, Sendable {
         let dailySpend = Dictionary(grouping: activity.results, by: \.date)
             .mapValues { $0.reduce(0) { $0 + $1.metrics.spend } }
         let currentDay = calendar.component(.day, from: now)
+        let localToday = Self.isoDateString(now, calendar: calendar)
+        var utcCalendar = Calendar(identifier: .gregorian)
+        utcCalendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let utcToday = Self.isoDateString(now, calendar: utcCalendar)
+        let extendedUtcBucket = utcToday > localToday ? utcToday : nil
         var cumulativeSpend = 0.0
         let actualPoints = (1...currentDay).compactMap { day -> MonthlyUsagePoint? in
             guard let date = calendar.date(byAdding: .day, value: day - 1, to: monthStart) else { return nil }
-            cumulativeSpend += dailySpend[Self.isoDateString(date, calendar: calendar), default: 0]
+            let dateKey = Self.isoDateString(date, calendar: calendar)
+            cumulativeSpend += dailySpend[dateKey, default: 0]
+            if dateKey == localToday, let extendedUtcBucket {
+                cumulativeSpend += dailySpend[extendedUtcBucket, default: 0]
+            }
             return MonthlyUsagePoint(date: date, cumulativeSpend: cumulativeSpend)
         }
         guard let currentPoint = actualPoints.last else { return nil }

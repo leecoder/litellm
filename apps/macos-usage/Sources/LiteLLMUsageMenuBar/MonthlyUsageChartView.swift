@@ -55,7 +55,7 @@ struct MonthlyUsageChartView: View {
                     .lineStyle(StrokeStyle(lineWidth: 2))
                 }
 
-                ForEach(data.forecastPoints) { point in
+                ForEach(Array(data.forecastPoints.enumerated()), id: \.offset) { _, point in
                     LineMark(
                         x: .value("날짜", point.date),
                         y: .value("예상 사용", point.cumulativeSpend),
