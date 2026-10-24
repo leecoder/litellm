@@ -15126,6 +15126,7 @@ export interface paths {
          *         api_key (Optional[str]): Filter by API key.
          *         exclude_team_ids (Optional[str]): Comma-separated list of team IDs to exclude.
          *         timezone (Optional[int]): Timezone offset in minutes from UTC, matching JavaScript's Date.getTimezoneOffset() convention.
+         *         include_current_utc_day (bool): Extend a live range to today's UTC bucket when timezone is provided.
          *     Returns:
          *         SpendAnalyticsPaginatedResponse: Response containing all daily activity data for the range.
          */
@@ -58618,6 +58619,7 @@ export interface operations {
                 api_key?: string | null;
                 exclude_team_ids?: string | null;
                 timezone?: number | null;
+                include_current_utc_day?: boolean;
             };
             header?: never;
             path?: never;
